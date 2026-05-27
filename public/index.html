@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LocalFix</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0056b3; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        select, textarea, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { background: #28a745; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; font-size: 16px; }
+        button:hover { background: #218838; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #0056b3; color: white; }
+        .status-badge { padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        .status-In-lucru { background: #ffc107; color: #000; }
+        .status-Rezolvat { background: #28a745; color: #fff; }
+        .status-In-asteptare { background: #17a2b8; color: #fff; }
+        hr { border: 0; border-top: 1px solid #eee; margin: 30px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🌱 LocalFix - Panou Central</h1>
+    
+    <h2>Raportează o avarie nouă</h2>
+    <form id="issueForm">
+        <div class="form-group">
+            <label>Categorie Problema</label>
+            <select id="categorie" required>
+                <option value="Infrastructura">Infrastructură (Gropi, Asfalt)</option>
+                <option value="Iluminat">Iluminat Public</option>
+                <option value="Curatenie">Curățenie și Deșeuri</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Descriere (Locație și detalii)</label>
+            <textarea id="descriere" rows="3" placeholder="Ex: Groapă pe strada X..." required></textarea>
+        </div>
+        <button type="submit">Trimite Sesizarea</button>
+    </form>
+
+    <hr>
+
+    <h2>Tichete Raportate (Live)</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Categorie</th>
+                <th>Descriere</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="tabel-issues">
+        </tbody>
+    </table>
+</div>
+
+<script>
+    async function incarcaAvarii() {
+        const response = await fetch('/api/issues');
+        const issues = await response.json();
+        
+        const tbody = document.getElementById('tabel-issues');
+        tbody.innerHTML = '';
+        
+        issues.forEach(issue => {
+            const statusClass = "status-" + issue.status.replace(" ", "-");
+            tbody.innerHTML += `
+                <tr>
+                    <td>#${issue.id}</td>
+                    <td>${issue.categorie}</td>
+                    <td>${issue.descriere}</td>
+                    <td><span class="status-badge ${statusClass}">${issue.status}</span></td>
+                </tr>
+            `;
+        });
+    }
+
+    document.getElementById('issueForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const categorie = document.getElementById('categorie').value;
+        const descriere = document.getElementById('descriere').value;
+        
+        const response = await fetch('/api/issues', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ categorie, descriere })
+        });
+
+        if(response.ok) {
+            document.getElementById('descriere').value = '';
+            incarcaAvarii();
+        }
+    });
+
+    incarcaAvarii();
+</script>
+
+</body>
+</html>
